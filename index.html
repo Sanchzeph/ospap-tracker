@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OSPAP Prep Tracker</title>
+<meta name="description" content="Daily study tracker for UK pharmacy registration prep">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1F3A5F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OSPAP Prep">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="/icons/icon-192.png">
+<style>
+  :root{
+    --navy:#1F3A5F;
+    --navy-light:#2C4D7A;
+    --teal:#1D9E75;
+    --teal-dark:#0F6E56;
+    --bg:#0F1115;
+    --surface:#171A21;
+    --surface-2:#1E222B;
+    --border:#2A2E38;
+    --text:#F2F3F5;
+    --text-secondary:#9AA0AC;
+    --text-tertiary:#6B7280;
+    --amber:#EF9F27;
+    --red:#E24B4A;
+    --green:#1D9E75;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--text);
+    padding-bottom:calc(84px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:var(--navy);
+    padding:calc(16px + env(safe-area-inset-top)) 20px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .topbar h1{font-size:17px;font-weight:600;margin:0;}
+  .topbar .sub{font-size:12px;color:#C7D3E0;margin:2px 0 0;}
+  .icon-btn{
+    background:rgba(255,255,255,0.08);border:none;border-radius:10px;
+    width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+    color:white;font-size:16px;
+  }
+  main{padding:16px;max-width:480px;margin:0 auto;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .stat-row{display:flex;gap:10px;margin-bottom:16px;}
+  .stat-card{
+    flex:1;background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:14px 12px;
+  }
+  .stat-card .label{font-size:11.5px;color:var(--text-secondary);margin:0 0 4px;}
+  .stat-card .value{font-size:21px;font-weight:600;margin:0;}
+
+  .warn-card{
+    background:rgba(226,75,74,0.12);border:1px solid rgba(226,75,74,0.3);
+    border-radius:14px;padding:12px 14px;margin-bottom:16px;font-size:13px;
+    color:#FF9C9B;line-height:1.5;display:none;
+  }
+
+  .today-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:16px;padding:18px 16px;margin-bottom:16px;
+  }
+  .today-card .label{font-size:13px;color:var(--text-secondary);margin:0 0 2px;}
+  .today-card .focus{font-size:15px;font-weight:500;margin:0 0 16px;line-height:1.4;}
+  .btn-row{display:flex;gap:8px;}
+  .btn{
+    flex:1;border:none;border-radius:12px;padding:13px 8px;
+    font-size:13.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .btn-primary{background:var(--teal);color:#06241B;}
+  .btn-secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+  .done-msg{
+    display:none;font-size:13.5px;color:var(--teal);margin:0;
+    align-items:center;gap:6px;
+  }
+  .done-msg.show{display:flex;}
+  .undo-link{background:none;border:none;color:var(--text-tertiary);font-size:12px;text-decoration:underline;margin-left:auto;padding:0;}
+
+  .section-title{font-size:13px;font-weight:600;color:var(--text-secondary);margin:20px 0 8px;text-transform:uppercase;letter-spacing:0.04em;}
+
+  .grid7{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;}
+  .day-cell{
+    aspect-ratio:1;border-radius:9px;background:var(--surface-2);
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-tertiary);
+    border:1px solid var(--border);
+  }
+  .day-cell.full{background:var(--teal);color:#06241B;border-color:var(--teal);font-weight:600;}
+  .day-cell.short{background:rgba(239,159,39,0.85);color:#2A1B02;border-color:var(--amber);font-weight:600;}
+  .day-cell.today-marker{border-color:#fff;border-width:1.5px;}
+
+  .phase-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .phase-card.active{border-color:var(--teal);background:rgba(29,158,117,0.08);}
+  .phase-card .weeks{font-size:11.5px;color:var(--text-tertiary);margin:0 0 3px;}
+  .phase-card .title{font-size:14.5px;font-weight:600;margin:0 0 4px;}
+  .phase-card .detail{font-size:12.5px;color:var(--text-secondary);margin:0;line-height:1.5;}
+
+  .res-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .res-card a{color:#7EC4FF;text-decoration:none;font-size:13.5px;font-weight:500;}
+  .res-card .note{font-size:12px;color:var(--text-secondary);margin:4px 0 0;}
+  .res-group{font-size:12.5px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin:18px 0 8px;}
+
+  .guardrail{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:14px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;
+  }
+  .guardrail .num{
+    width:26px;height:26px;border-radius:50%;background:var(--navy-light);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+    flex-shrink:0;margin-top:1px;
+  }
+  .guardrail .title{font-size:14px;font-weight:600;margin:0 0 3px;}
+  .guardrail .body{font-size:12.5px;color:var(--text-secondary);margin:0;line-height:1.5;}
+
+  .tabbar{
+    position:fixed;bottom:0;left:0;right:0;z-index:20;
+    background:rgba(23,26,33,0.92);backdrop-filter:blur(20px);
+    border-top:1px solid var(--border);
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    display:flex;justify-content:space-around;
+  }
+  .tab-btn{
+    background:none;border:none;color:var(--text-tertiary);
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-size:10.5px;padding:6px 14px;border-radius:10px;flex:1;
+  }
+  .tab-btn.active{color:var(--teal);}
+  .tab-btn .ic{font-size:20px;}
+
+  .progress-track{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin:8px 0 4px;}
+  .progress-fill{height:100%;background:var(--teal);border-radius:3px;}
+
+  .reset-btn{
+    width:100%;background:none;border:1px solid var(--border);color:var(--text-tertiary);
+    border-radius:12px;padding:12px;font-size:13px;margin-top:24px;
+  }
+  .install-banner{
+    background:var(--surface);border:1px solid var(--teal);border-radius:14px;
+    padding:14px 16px;margin-bottom:16px;display:none;
+  }
+  .install-banner.show{display:block;}
+  .install-banner p{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--text-secondary);}
+  .install-banner button{width:100%;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>OSPAP Prep Tracker</h1>
+    <p class="sub" id="header-sub">Loading...</p>
+  </div>
+</div>
+
+<main>
+
+  <div id="install-banner" class="install-banner">
+    <p id="install-text"></p>
+    <button class="btn btn-secondary" id="install-btn" style="display:none;">Add to home screen</button>
+  </div>
+
+  <div class="view active" id="view-today">
+    <div class="stat-row">
+      <div class="stat-card">
+        <p class="label">Current streak</p>
+        <p class="value" id="streak-val">0 days</p>
+      </div>
+      <div class="stat-card">
+        <p class="label">This week</p>
+        <p class="value" id="week-val">0 / 6</p>
+      </div>
+      <div class="stat-card">
+        <p class="label">Plan week</p>
+        <p class="value" id="plan-week-val">1 / 36</p>
+      </div>
+    </div>
+
+    <div class="warn-card" id="warn-card"></div>
+
+    <div class="today-card">
+      <p class="label" id="today-date">Today</p>
+      <p class="focus" id="today-focus">Loading this week's focus...</p>
+      <div class="btn-row" id="btn-row">
+        <button class="btn btn-primary" id="btn-full">Full hour done</button>
+        <button class="btn btn-secondary" id="btn-short">Short version</button>
+      </div>
+      <p class="done-msg" id="done-msg">Logged for today. Well done. <button class="undo-link" id="undo-btn">undo</button></p>
+    </div>
+
+    <div class="progress-track"><div class="progress-fill" id="overall-progress" style="width:0%"></div></div>
+    <p style="font-size:12px;color:var(--text-tertiary);margin:0 0 20px;" id="overall-progress-label">0% through the 36 week plan</p>
+
+    <p class="section-title">Last 14 days</p>
+    <div class="grid7" id="history-grid"></div>
+
+    <button class="reset-btn" id="reset-btn">Reset all progress</button>
+  </div>
+
+  <div class="view" id="view-plan">
+    <p class="section-title">The three phases</p>
+    <div id="phase-list"></div>
+    <p class="section-title">Week by week</p>
+    <div id="week-list"></div>
+  </div>
+
+  <div class="view" id="view-resources">
+    <div class="res-group">Core references</div>
+    <div id="res-core"></div>
+    <div class="res-group">Regulatory and exam framework</div>
+    <div id="res-reg"></div>
+  </div>
+
+  <div class="view" id="view-guardrails">
+    <p class="section-title">Keeping this from falling off</p>
+    <div id="guardrail-list"></div>
+  </div>
+
+</main>
+
+<div class="tabbar">
+  <button class="tab-btn active" data-view="today"><span class="ic">&#128197;</span>Today</button>
+  <button class="tab-btn" data-view="plan"><span class="ic">&#128218;</span>Plan</button>
+  <button class="tab-btn" data-view="resources"><span class="ic">&#128279;</span>Resources</button>
+  <button class="tab-btn" data-view="guardrails"><span class="ic">&#128737;</span>Guardrails</button>
+</div>
+
+<script src="/data.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
